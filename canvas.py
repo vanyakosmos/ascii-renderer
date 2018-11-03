@@ -7,8 +7,12 @@ from typing import NamedTuple
 import numpy as np
 
 
-greyscale = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
-greyscale_mini = '@%#*+=-:. '
+greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
+greyscale_mini = '@%#*+=-:.'
+greyscale_rect = '█▓▒░'
+greyscale_rect2 = '█▇▆▅▄▃▂▁'
+
+greyscale = greyscale_mini
 
 
 class Data(NamedTuple):
@@ -19,7 +23,8 @@ class Data(NamedTuple):
 
 
 def map_char(i):
-    c = greyscale_mini[int((len(greyscale_mini) - 1) * i)]
+    i = max(0.0, min(0.999, i))
+    c = greyscale[int((len(greyscale)) * i)]
     return f'{c} '
 
 
@@ -52,7 +57,6 @@ class Canvas:
         i = self.buff[y, x]
         for shader in self.shaders:
             i = shader(Data(y=y / self.h, x=x / self.w, time=t, pix=i))
-            i = max(0, min(1, i))  # clip
         self.buff[y, x] = i
 
     async def draw(self):
@@ -76,11 +80,11 @@ class Canvas:
 
 
 def waves(d: Data):
-    return abs(cos(sin(d.time + 2 * d.x * d.pix) * 3 * d.y + d.time))
+    return abs(cos(sin(d.time + 2 * d.x * d.pix) * 3 * d.y * d.pix + d.time))
 
 
 def eyes(d: Data):
-    return 1 - (sin(d.time + d.x * 20) + cos(d.time + d.y * 20)) / 2
+    return 1 - (sin(d.time + d.x * 20) + cos(d.time + d.y * 20)) / 1
 
 
 def main():
@@ -90,7 +94,7 @@ def main():
     canvas = Canvas(
         h, w,
         shaders=[eyes, waves],
-        throttle=0.05,
+        throttle=0.,
     )
     try:
         loop = asyncio.get_event_loop()
