@@ -15,8 +15,10 @@ def get_size(im, width, height):
 
 
 def get_image(path, width=-1, height=-1):
-    im = Image.open(path).convert('I')
-
+    im = Image.open(path).convert('RGBA')
+    bg = Image.new('RGBA', im.size, (255, 255, 255, 255))
+    bg.paste(im, mask=im)
+    im = bg.convert('I')
     w, h = get_size(im, width, height)
     im = im.resize([w, h])
     arr = np.array(im, dtype=np.float)

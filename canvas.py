@@ -34,7 +34,7 @@ class Canvas:
 
         self.drawn = 0
 
-        self.shader = shader if type(shader) is list else [shader]
+        self.shaders = shader if type(shader) is list else [shader]
         self.buff = np.zeros([h, w], dtype=np.float)
         self.texture = np.ones([h, w], dtype=np.float)
 
@@ -65,12 +65,11 @@ class Canvas:
             i = 1.0
         buffer[y, x] = i
 
-    async def draw(self):
-        self.clear()
+    async def apply_shaders(self):
         t = time()
         # texture is readonly inside shader
         texture = self.texture
-        for shader in self.shader:
+        for shader in self.shaders:
             await asyncio.wait([
                 self.set_pixel(
                     shader,
@@ -82,6 +81,10 @@ class Canvas:
                 for x in range(self.w)
             ])
             texture = self.buff.copy()
+
+    async def draw(self):
+        self.clear()
+        await self.apply_shaders()
         chars_mat = np.array(map_char(self.buff), dtype=np.object)
         print('\n'.join(chars_mat.sum(axis=1)))
         self.drawn = self.h
