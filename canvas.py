@@ -5,6 +5,7 @@ from time import time
 import numpy as np
 
 import shaders
+from image import get_image
 from shaders import Data
 
 
@@ -34,33 +35,52 @@ class Canvas:
         self.drawn = 0
 
         self.shader = shader if type(shader) is list else [shader]
-        self.buff = np.zeros([h, w], dtype=np.float)
+        self.buff = None
+        self.init_buff = np.zeros([h, w], dtype=np.float)
 
-    @classmethod
-    def from_image(cls):
-        # todo
-        pass
+    def set_texture(self, path):
+        arr = get_image(path, height=self.h)
+        self.h, self.w = arr.shape
+        self.init_buff = arr
 
     def clear(self):
         for y in range(self.drawn):
             sys.stdout.write("\033[F")
             sys.stdout.write("\033[K")
         self.drawn = 0
+        self.buff = self.init_buff.copy()
 
-    async def set_pixel(self, y, x, t):
-        i = self.buff[y, x]
-        for shader in self.shader:
-            i = shader(Data(y=y / self.h, x=x / self.w, time=t, pix=i))
-        self.buff[y, x] = i
+    async def set_pixel(self, shader, texture, buffer, y, x, t):
+        try:
+            i = shader(Data(
+                y=y,
+                h=self.h,
+                x=x,
+                w=self.w,
+                time=t,
+                buff=texture
+            ))
+        except Exception:
+            i = 1.0
+        buffer[y, x] = i
 
     async def draw(self):
         self.clear()
         t = time()
-        await asyncio.wait([
-            self.set_pixel(y, x, t)
-            for y in range(self.h)
-            for x in range(self.w)
-        ])
+
+        texture = self.init_buff
+        for shader in self.shader:
+            await asyncio.wait([
+                self.set_pixel(
+                    shader,
+                    texture,
+                    self.buff,
+                    y, x, t
+                )
+                for y in range(self.h)
+                for x in range(self.w)
+            ])
+            texture = self.buff.copy()
         buff = np.array(map_char(self.buff), dtype=np.object)
         print('\n'.join(buff.sum(axis=1)))
         self.drawn = self.h
@@ -74,14 +94,15 @@ class Canvas:
 
 
 def main():
-    # h, w = 40, 75
-    h, w = 20, 35
+    h, w = 40, 75
+    # h, w = 20, 35
 
     canvas = Canvas(
         h, w,
-        shader=[shaders.waves(False)],
+        shader=[shaders.waves],
         throttle=0.,
     )
+    canvas.set_texture('images/py.png')
     try:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(canvas.loop())

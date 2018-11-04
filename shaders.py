@@ -1,24 +1,32 @@
 from math import cos, sin
-
 from typing import NamedTuple
-from functools import partial
+
+from numpy import ndarray
 
 
 class Data(NamedTuple):
-    x: float
-    y: float
+    # position
+    x: int
+    y: int
+    # canvas size
+    w: int
+    h: int
+    # misc
     time: float
-    pix: float
+    buff: ndarray
 
 
-def waves_(pass_pix, d: Data):
-    p = d.pix if pass_pix else 1
-    return abs(cos(sin(d.time + 2 * d.x * p) * 3 * d.y * p + d.time))
-
-
-def waves(pass_pix=True):
-    return partial(waves_, pass_pix)
+def waves(d: Data):
+    x = d.x / d.w
+    y = d.y / d.h
+    r = abs(cos(sin(d.time + 2 * x) * 3 * y + d.time))
+    s = 2
+    p = d.buff[max(0, d.y - s):d.y + s, max(0, d.x - s):d.x + s].mean()
+    return r * p
 
 
 def eyes(d: Data):
-    return 1 - (sin(d.time + d.x * 10) + cos(d.time + d.y * 10))
+    x = d.x / d.w
+    y = d.y / d.h
+    p = d.buff[d.y, d.x]
+    return 1 - (sin(d.time + x * 10) + cos(d.time + y * 10)) * p

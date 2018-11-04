@@ -16,10 +16,15 @@ def print_stdout(process):
         print(stdout)
 
 
+def cls():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+
 def main():
     command = ' '.join(sys.argv[1:])
     path = '.'
     sleep_time = 1
+    cls()
     process = subprocess.Popen(command, shell=True)
 
     last_mtime = max(file_times(path))
@@ -29,7 +34,7 @@ def main():
             print_stdout(process)
             if max_mtime > last_mtime:
                 last_mtime = max_mtime
-                print('Restarting process...')
+                cls()
                 process.kill()
                 process = subprocess.Popen(command, shell=True)
             time.sleep(sleep_time)
