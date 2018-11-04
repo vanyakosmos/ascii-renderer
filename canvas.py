@@ -11,16 +11,16 @@ from shaders import Data
 
 greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
 greyscale_mini = '@%#*+=-:.'
-greyscale_rect = '█▓▒░'
+greyscale_rect = '▓▒░=:.'
 greyscale_rect2 = '█▇▆▅▄▃▂▁'
 
-greyscale = greyscale_mini
+greyscale = greyscale_rect
 
 
 def map_char(i):
     i = max(0.0, min(0.999, i))
     c = greyscale[int((len(greyscale)) * i)]
-    return f'{c} '
+    return f'{c}{c}'
 
 
 map_char = np.vectorize(map_char)
@@ -35,20 +35,20 @@ class Canvas:
         self.drawn = 0
 
         self.shader = shader if type(shader) is list else [shader]
-        self.buff = None
-        self.init_buff = np.zeros([h, w], dtype=np.float)
+        self.buff = np.zeros([h, w], dtype=np.float)
+        self.texture = np.ones([h, w], dtype=np.float)
 
     def set_texture(self, path):
         arr = get_image(path, height=self.h)
         self.h, self.w = arr.shape
-        self.init_buff = arr
+        self.texture = arr
+        self.buff = np.zeros_like(arr)
 
     def clear(self):
         for y in range(self.drawn):
             sys.stdout.write("\033[F")
             sys.stdout.write("\033[K")
         self.drawn = 0
-        self.buff = self.init_buff.copy()
 
     async def set_pixel(self, shader, texture, buffer, y, x, t):
         try:
@@ -67,8 +67,8 @@ class Canvas:
     async def draw(self):
         self.clear()
         t = time()
-
-        texture = self.init_buff
+        # texture is readonly inside shader
+        texture = self.texture
         for shader in self.shader:
             await asyncio.wait([
                 self.set_pixel(
@@ -81,8 +81,8 @@ class Canvas:
                 for x in range(self.w)
             ])
             texture = self.buff.copy()
-        buff = np.array(map_char(self.buff), dtype=np.object)
-        print('\n'.join(buff.sum(axis=1)))
+        chars_mat = np.array(map_char(self.buff), dtype=np.object)
+        print('\n'.join(chars_mat.sum(axis=1)))
         self.drawn = self.h
 
     async def loop(self):
