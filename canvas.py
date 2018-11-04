@@ -1,10 +1,11 @@
 import asyncio
 import sys
-from math import cos, sin
 from time import time
-from typing import NamedTuple
 
 import numpy as np
+
+import shaders
+from shaders import Data
 
 
 greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
@@ -13,13 +14,6 @@ greyscale_rect = '█▓▒░'
 greyscale_rect2 = '█▇▆▅▄▃▂▁'
 
 greyscale = greyscale_mini
-
-
-class Data(NamedTuple):
-    x: float
-    y: float
-    time: float
-    pix: float
 
 
 def map_char(i):
@@ -32,14 +26,14 @@ map_char = np.vectorize(map_char)
 
 
 class Canvas:
-    def __init__(self, h, w, shaders, throttle=0.0):
+    def __init__(self, h, w, shader, throttle=0.0):
         self.h = h
         self.w = w
         self.throttle = throttle
 
         self.drawn = 0
 
-        self.shaders = shaders if type(shaders) is list else [shaders]
+        self.shader = shader if type(shader) is list else [shader]
         self.buff = np.zeros([h, w], dtype=np.float)
 
     @classmethod
@@ -55,7 +49,7 @@ class Canvas:
 
     async def set_pixel(self, y, x, t):
         i = self.buff[y, x]
-        for shader in self.shaders:
+        for shader in self.shader:
             i = shader(Data(y=y / self.h, x=x / self.w, time=t, pix=i))
         self.buff[y, x] = i
 
@@ -79,21 +73,13 @@ class Canvas:
             ])
 
 
-def waves(d: Data):
-    return abs(cos(sin(d.time + 2 * d.x * d.pix) * 3 * d.y * d.pix + d.time))
-
-
-def eyes(d: Data):
-    return 1 - (sin(d.time + d.x * 20) + cos(d.time + d.y * 20)) / 1
-
-
 def main():
-    h, w = 40, 75
-    # h, w = 20, 35
+    # h, w = 40, 75
+    h, w = 20, 35
 
     canvas = Canvas(
         h, w,
-        shaders=[eyes, waves],
+        shader=[shaders.waves(False)],
         throttle=0.,
     )
     try:

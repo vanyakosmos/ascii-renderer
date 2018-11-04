@@ -13,3 +13,4 @@ python_version = "3.6"
 
 [scripts]
 start = "python canvas.py"
+auto = "python autoreload.py python canvas.py"
