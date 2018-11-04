@@ -13,5 +13,9 @@ pillow = "*"
 python_version = "3.6"
 
 [scripts]
+# render stuff
 start = "python canvas.py"
-auto = "python autoreload.py python canvas.py"
+# render stuff with autoreload when files change
+dev = "python autoreload.py python canvas.py"
+# record rendering session
+rec = "asciinema rec -c \"pipenv run start\""
