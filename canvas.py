@@ -38,8 +38,9 @@ class Canvas:
         self.buff = np.zeros([h, w], dtype=np.float)
         self.texture = np.ones([h, w], dtype=np.float)
 
-    def set_texture(self, path):
-        arr = get_image(path, height=self.h)
+    def set_texture(self, path, match_height=True):
+        w, h = (-1, self.h) if match_height else (self.w, -1)
+        arr = get_image(path, height=h, width=w)
         self.h, self.w = arr.shape
         self.texture = arr
         self.buff = np.zeros_like(arr)
