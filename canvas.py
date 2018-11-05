@@ -1,5 +1,6 @@
 import sys
-from time import time
+from multiprocessing.pool import ThreadPool
+from time import sleep, time
 
 import numpy as np
 
@@ -23,6 +24,7 @@ def map_char(i):
 
 
 map_char = np.vectorize(map_char)
+pool = ThreadPool()
 
 
 class Canvas:
@@ -50,7 +52,7 @@ class Canvas:
             sys.stdout.write("\033[K")
         self.drawn = 0
 
-    def set_pixel(self, shader, texture, buffer, y, x, t):
+    def set_pixel(self, shader, texture, y, x, t):
         i = shader(Data(
             y=y,
             h=self.h,
@@ -59,34 +61,42 @@ class Canvas:
             time=t,
             buff=texture
         ))
-        buffer[y, x] = i
+        self.buff[y, x] = i
+
+    def set_pixel_one(self, args):
+        self.set_pixel(*args)
 
     def apply_shaders(self):
         t = time()
         # texture is readonly inside shader
         texture = self.texture
         for shader in self.shaders:
+            # pool.map(self.set_pixel_one, [
+            #     (shader, texture, y, x, t)
+            #     for y in range(self.h)
+            #     for x in range(self.w)
+            # ])
             for y in range(self.h):
                 for x in range(self.w):
                     self.set_pixel(
                         shader,
                         texture,
-                        self.buff,
                         y, x, t
                     )
-
             texture = self.buff.copy()
 
     def draw(self):
-        self.clear()
         self.apply_shaders()
         chars_mat = np.array(map_char(self.buff), dtype=np.object)
+
+        self.clear()
         print('\n'.join(chars_mat.sum(axis=1)))
         self.drawn = self.h
 
     def loop(self):
         while True:
             self.draw()
+            sleep(self.throttle)
 
 
 def main():
@@ -95,7 +105,7 @@ def main():
 
     canvas = Canvas(
         h, w,
-        shader=[shaders.pulsar],
+        shader=[shaders.pulsar, shaders.eyes, shaders.waves],
         throttle=0.,
     )
     canvas.set_texture('images/eye.png')
