@@ -12,9 +12,9 @@ from shaders import Data
 greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
 greyscale_mini = '@%#*+=-:.'
 greyscale_rect = '▓▒░=:.'
-greyscale_rect2 = '█▇▆▅▄▃▂▁'
+greyscale_rect2 = '█▇▆▅▄▃▂▁ '
 
-greyscale = greyscale_rect
+greyscale = greyscale_rect2[::-1]
 
 
 def map_char(i):
@@ -61,7 +61,7 @@ class Canvas:
                 time=t,
                 buff=texture
             ))
-        except Exception:
+        except Exception as e:
             i = 1.0
         buffer[y, x] = i
 
@@ -103,10 +103,10 @@ def main():
 
     canvas = Canvas(
         h, w,
-        shader=[shaders.waves],
+        shader=[shaders.pulsar],
         throttle=0.,
     )
-    canvas.set_texture('images/py.png')
+    canvas.set_texture('images/eye.png')
     try:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(canvas.loop())
