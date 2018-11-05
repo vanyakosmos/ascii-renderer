@@ -1,4 +1,3 @@
-import asyncio
 import sys
 from time import time
 
@@ -51,50 +50,43 @@ class Canvas:
             sys.stdout.write("\033[K")
         self.drawn = 0
 
-    async def set_pixel(self, shader, texture, buffer, y, x, t):
-        try:
-            i = shader(Data(
-                y=y,
-                h=self.h,
-                x=x,
-                w=self.w,
-                time=t,
-                buff=texture
-            ))
-        except Exception as e:
-            i = 1.0
+    def set_pixel(self, shader, texture, buffer, y, x, t):
+        i = shader(Data(
+            y=y,
+            h=self.h,
+            x=x,
+            w=self.w,
+            time=t,
+            buff=texture
+        ))
         buffer[y, x] = i
 
-    async def apply_shaders(self):
+    def apply_shaders(self):
         t = time()
         # texture is readonly inside shader
         texture = self.texture
         for shader in self.shaders:
-            await asyncio.wait([
-                self.set_pixel(
-                    shader,
-                    texture,
-                    self.buff,
-                    y, x, t
-                )
-                for y in range(self.h)
-                for x in range(self.w)
-            ])
+            for y in range(self.h):
+                for x in range(self.w):
+                    self.set_pixel(
+                        shader,
+                        texture,
+                        self.buff,
+                        y, x, t
+                    )
+
             texture = self.buff.copy()
 
-    async def draw(self):
+    def draw(self):
         self.clear()
-        await self.apply_shaders()
+        self.apply_shaders()
         chars_mat = np.array(map_char(self.buff), dtype=np.object)
         print('\n'.join(chars_mat.sum(axis=1)))
         self.drawn = self.h
 
-    async def loop(self):
+    def loop(self):
         while True:
-            await asyncio.wait([
-                self.draw(),
-                asyncio.sleep(self.throttle)
-            ])
+            self.draw()
 
 
 def main():
@@ -108,9 +100,7 @@ def main():
     )
     canvas.set_texture('images/eye.png')
     try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(canvas.loop())
-        loop.close()
+        canvas.loop()
     except KeyboardInterrupt:
         pass
 
