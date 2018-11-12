@@ -1,5 +1,5 @@
+import os
 import sys
-from multiprocessing.pool import ThreadPool
 from time import sleep, time
 
 import numpy as np
@@ -13,18 +13,20 @@ greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:
 greyscale_mini = '@%#*+=-:.'
 greyscale_rect = '▓▒░=:.'
 greyscale_rect2 = '█▇▆▅▄▃▂▁ '
+greyscale = greyscale_rect[::-1]
 
-greyscale = greyscale_rect2[::-1]
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def map_char(i):
     i = max(0.0, min(0.999, i))
     c = greyscale[int((len(greyscale)) * i)]
-    return f'{c}{c}'
+    return c * 2
 
 
-map_char = np.vectorize(map_char)
-pool = ThreadPool()
+map_char = np.vectorize(map_char, otypes=[np.object])
 
 
 class Canvas:
@@ -32,8 +34,7 @@ class Canvas:
         self.h = h
         self.w = w
         self.throttle = throttle
-
-        self.drawn = 0
+        self.counter = 0
 
         self.shaders = shader if type(shader) is list else [shader]
         self.buff = np.zeros([h, w], dtype=np.float)
@@ -47,10 +48,11 @@ class Canvas:
         self.buff = np.zeros_like(arr)
 
     def clear(self):
-        for y in range(self.drawn):
-            sys.stdout.write("\033[F")
-            sys.stdout.write("\033[K")
-        self.drawn = 0
+        """
+        > \033[K - clear line
+        > \033[F - move cursor up
+        """
+        sys.stdout.write("\033[F" * self.h)
 
     def set_pixel(self, shader, texture, y, x, t):
         i = shader(Data(
@@ -67,15 +69,10 @@ class Canvas:
         self.set_pixel(*args)
 
     def apply_shaders(self):
-        t = time()
+        t = time() * 5
         # texture is readonly inside shader
         texture = self.texture
         for shader in self.shaders:
-            # pool.map(self.set_pixel_one, [
-            #     (shader, texture, y, x, t)
-            #     for y in range(self.h)
-            #     for x in range(self.w)
-            # ])
             for y in range(self.h):
                 for x in range(self.w):
                     self.set_pixel(
@@ -85,18 +82,22 @@ class Canvas:
                     )
             texture = self.buff.copy()
 
+    def draw_blank(self):
+        for y in range(self.h):
+            print(' ' * self.w)
+
     def draw(self):
         self.apply_shaders()
-        chars_mat = np.array(map_char(self.buff), dtype=np.object)
-
+        chars: np.ndarray = map_char(self.buff)
         self.clear()
-        print('\n'.join(chars_mat.sum(axis=1)))
-        self.drawn = self.h
+        print('\n'.join(chars.sum(axis=1)))
 
     def loop(self):
+        self.draw_blank()
         while True:
             self.draw()
             sleep(self.throttle)
+            self.counter += 1
 
 
 def main():
@@ -105,14 +106,23 @@ def main():
 
     canvas = Canvas(
         h, w,
-        shader=[shaders.pulsar, shaders.eyes, shaders.waves],
+        shader=[shaders.waves],
         throttle=0.,
     )
+    s = time()
     canvas.set_texture('images/eye.png')
     try:
         canvas.loop()
     except KeyboardInterrupt:
-        pass
+        """
+        fps stats for single 'waves' shader:
+        - plain: 20-25
+        - threads: 20-25
+        - with numba's @jit: 85-95
+        """
+        clear_screen()
+        dif = time() - s
+        print(f"{canvas.counter / dif:.2f}fps ({canvas.counter}f / {dif:.2f}s)")
 
 
 if __name__ == '__main__':

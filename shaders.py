@@ -3,6 +3,7 @@ from typing import NamedTuple
 
 import numpy as np
 from numpy import ndarray
+from numba import jit
 
 
 class Data(NamedTuple):
@@ -17,12 +18,14 @@ class Data(NamedTuple):
     buff: ndarray
 
 
+@jit(nopython=True)
 def dist(a, b):
-    a = np.asarray(a)
-    b = np.asarray(b)
+    a = np.array(a)
+    b = np.array(b)
     return np.sqrt(np.sum((a - b) ** 2))
 
 
+@jit(nopython=True)
 def waves(d: Data):
     x = d.x / d.w
     y = d.y / d.h
@@ -32,13 +35,15 @@ def waves(d: Data):
     return r * p
 
 
+@jit(nopython=True)
 def eyes(d: Data):
     x = d.x / d.w
     y = d.y / d.h
     p = d.buff[d.y, d.x]
-    return 1 - (sin(d.time + x * 10) + cos(d.time + y * 10)) * p
+    return (sin(d.time + x * 10) + cos(d.time + y * 10)) * p
 
 
+@jit(nopython=True)
 def pulsar(d: Data):
     x = d.x / d.w
     y = d.y / d.h
