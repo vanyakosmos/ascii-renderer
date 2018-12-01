@@ -20,7 +20,7 @@ def rel(x, y, buff):
 @jit(nopython=True)
 def waves(x, y, time, buff):
     x_, y_ = rel(x, y, buff)
-    r = abs(cos(sin(time * 5 + 2 * x_) * 3 * y_ + time))
+    r = abs(cos(sin(time * 2 + 2 * x_) * 3 * y_ + time))
     s = 2
     p = buff[max(0, y - s):y + s, max(0, x - s):x + s].mean()
     return r * p

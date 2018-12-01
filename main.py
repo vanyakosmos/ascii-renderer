@@ -5,6 +5,7 @@ from time import sleep, time
 import numpy as np
 
 import shaders
+from image import get_image
 from utils import to_vec
 
 
@@ -13,10 +14,10 @@ greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:
 greyscale_mini = '@%#*+=-:.'
 greyscale_rect = '▓▒░=:.'
 greyscale_rect2 = '█▇▆▅▄▃▂▁ '
-GS = greyscale_rect[::-1]
+GS = greyscale_rect
 
 # canvas size
-HEIGHT = 30
+HEIGHT = 40
 WIDTH = 45
 
 # draw everything in separate buffer (slower but prettier)
@@ -75,7 +76,7 @@ def draw_blank(buff):
 
 
 def draw_buff(buff):
-    chars: np.ndarray = map_char(buff.copy())
+    chars: np.ndarray = map_char(buff)
     jump_to_the_top(buff)
     print('\n'.join(chars.sum(axis=1)))
 
@@ -85,9 +86,10 @@ def draw(texture, buff):
     draw_buff(buff)
 
 
-def loop(height, width):
-    buff = np.zeros([height, width], dtype=np.float)
-    texture = np.ones([height, width], dtype=np.float)
+def loop(texture=None):
+    if texture is None:
+        texture = np.ones([HEIGHT, WIDTH], dtype=np.float)
+    buff = np.zeros_like(texture, dtype=np.float)
     counter = 0
     if ALT_SCREEN:
         print('\033[?1049h\033[H')
@@ -107,19 +109,14 @@ def loop(height, width):
 
 
 def show_fps_stats(start, loops_number):
-    """
-    fps stats for single 'waves' shader and eye.png with 40c height:
-    - plain: 20-25
-    - threads: 20-25
-    - with numba's @jit: 85-95
-    """
     dif = time() - start
     print(f"{loops_number / dif:.2f}fps ({loops_number}f / {dif:.2f}s)")
 
 
 def main():
     s = time()
-    loops_number = loop(HEIGHT, WIDTH)
+    texture = get_image('images/py.png', height=HEIGHT)
+    loops_number = loop(texture)
     show_fps_stats(s, loops_number)
 
 
