@@ -3,13 +3,13 @@
 
 ## Demos
 
-pulsar shader
+##### pulsar shader
 ![demo eye gif](images/demo-eye.gif)
 
-wave shader and another grayscale palette
+##### wave shader and another grayscale palette
 [![demo py gif](images/demo-py.gif)](https://asciinema.org/a/210121)
 
-wireframe of 3d cube
+##### wireframe of 3d cube
 ![demo cube gif](images/demo-cube.gif)
 
 
