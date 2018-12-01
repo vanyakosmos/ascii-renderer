@@ -24,3 +24,11 @@ def get_image(path, width=-1, height=-1):
     arr = np.array(im, dtype=np.float)
     arr /= 255
     return arr
+
+
+def main():
+    get_image('images/py.png')
+
+
+if __name__ == '__main__':
+    main()

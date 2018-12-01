@@ -7,26 +7,29 @@ import numpy as np
 import shaders
 from image import get_image
 from shaders import Data
+from utils import to_vec
 
 
+# draw everything in separate buffer (slower but prettier)
+ALT_SCREEN = True
+
+# various greyscale palettes
 greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
 greyscale_mini = '@%#*+=-:.'
 greyscale_rect = '▓▒░=:.'
 greyscale_rect2 = '█▇▆▅▄▃▂▁ '
-greyscale = greyscale_rect[::-1]
+GREYSCALE = greyscale_rect[::-1]
 
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
+@to_vec(otypes=[np.object])
 def map_char(i):
     i = max(0.0, min(0.999, i))
-    c = greyscale[int((len(greyscale)) * i)]
+    c = GREYSCALE[int((len(GREYSCALE)) * i)]
     return c * 2
-
-
-map_char = np.vectorize(map_char, otypes=[np.object])
 
 
 class Canvas:
@@ -69,7 +72,7 @@ class Canvas:
         self.set_pixel(*args)
 
     def apply_shaders(self):
-        t = time() * 5
+        t = time()
         # texture is readonly inside shader
         texture = self.texture
         for shader in self.shaders:
@@ -83,7 +86,7 @@ class Canvas:
             texture = self.buff.copy()
 
     def draw_blank(self):
-        for y in range(self.h):
+        for _ in range(self.h):
             print(' ' * self.w)
 
     def draw(self):
@@ -112,15 +115,20 @@ def main():
     s = time()
     canvas.set_texture('images/eye.png')
     try:
+        if ALT_SCREEN:
+            print('\033[?1049h\033[H')
         canvas.loop()
     except KeyboardInterrupt:
         """
-        fps stats for single 'waves' shader:
+        fps stats for single 'waves' shader and eye.png with 40c height:
         - plain: 20-25
         - threads: 20-25
         - with numba's @jit: 85-95
         """
-        clear_screen()
+        if ALT_SCREEN:
+            print('\033[?1049l')
+        else:
+            clear_screen()
         dif = time() - s
         print(f"{canvas.counter / dif:.2f}fps ({canvas.counter}f / {dif:.2f}s)")
 
