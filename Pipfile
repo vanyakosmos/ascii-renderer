@@ -15,7 +15,7 @@ python_version = "3.6"
 
 [scripts]
 # render stuff
-start = "python canvas.py"
+start = "python main.py"
 # render stuff with autoreload when files change
 dev = "python autoreload.py python canvas.py"
 # record rendering session
