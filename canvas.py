@@ -5,13 +5,9 @@ from time import sleep, time
 import numpy as np
 
 import shaders
-from image import get_image
 from shaders import Data
 from utils import to_vec
 
-
-# draw everything in separate buffer (slower but prettier)
-ALT_SCREEN = True
 
 # various greyscale palettes
 greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
@@ -20,9 +16,28 @@ greyscale_rect = '▓▒░=:.'
 greyscale_rect2 = '█▇▆▅▄▃▂▁ '
 GREYSCALE = greyscale_rect[::-1]
 
+# canvas size
+HEIGHT = 30
+WIDTH = 45
+
+# draw everything in separate buffer (slower but prettier)
+ALT_SCREEN = False
+
+# misc
+THROTTLE = 0.
+SHADERS = (shaders.waves,)
+
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def jump_to_the_top():
+    """
+    > \033[K - clear line
+    > \033[F - move cursor up
+    """
+    sys.stdout.write("\033[F" * HEIGHT)
 
 
 @to_vec(otypes=[np.object])
@@ -32,105 +47,78 @@ def map_char(i):
     return c * 2
 
 
-class Canvas:
-    def __init__(self, h, w, shader, throttle=0.0):
-        self.h = h
-        self.w = w
-        self.throttle = throttle
-        self.counter = 0
+def set_pixel(texture, buff, shader, y, x, t):
+    i = shader(Data(
+        y=y,
+        h=HEIGHT,
+        x=x,
+        w=WIDTH,
+        time=t,
+        buff=texture
+    ))
+    buff[y, x] = i
 
-        self.shaders = shader if type(shader) is list else [shader]
-        self.buff = np.zeros([h, w], dtype=np.float)
-        self.texture = np.ones([h, w], dtype=np.float)
 
-    def set_texture(self, path, match_height=True):
-        w, h = (-1, self.h) if match_height else (self.w, -1)
-        arr = get_image(path, height=h, width=w)
-        self.h, self.w = arr.shape
-        self.texture = arr
-        self.buff = np.zeros_like(arr)
+def apply_shaders(texture, buff):
+    t = time()
+    # texture is readonly inside shader
+    texture_ = texture.copy()
+    for shader in SHADERS:
+        for y in range(HEIGHT):
+            for x in range(WIDTH):
+                set_pixel(texture_, buff, shader, y, x, t)
+        texture_ = buff.copy()
 
-    def clear(self):
-        """
-        > \033[K - clear line
-        > \033[F - move cursor up
-        """
-        sys.stdout.write("\033[F" * self.h)
 
-    def set_pixel(self, shader, texture, y, x, t):
-        i = shader(Data(
-            y=y,
-            h=self.h,
-            x=x,
-            w=self.w,
-            time=t,
-            buff=texture
-        ))
-        self.buff[y, x] = i
+def draw_blank():
+    for _ in range(HEIGHT):
+        print(' ' * WIDTH)
 
-    def set_pixel_one(self, args):
-        self.set_pixel(*args)
 
-    def apply_shaders(self):
-        t = time()
-        # texture is readonly inside shader
-        texture = self.texture
-        for shader in self.shaders:
-            for y in range(self.h):
-                for x in range(self.w):
-                    self.set_pixel(
-                        shader,
-                        texture,
-                        y, x, t
-                    )
-            texture = self.buff.copy()
+def draw(texture, buff):
+    apply_shaders(texture, buff)
+    chars: np.ndarray = map_char(buff)
+    jump_to_the_top()
+    print('\n'.join(chars.sum(axis=1)))
 
-    def draw_blank(self):
-        for _ in range(self.h):
-            print(' ' * self.w)
 
-    def draw(self):
-        self.apply_shaders()
-        chars: np.ndarray = map_char(self.buff)
-        self.clear()
-        print('\n'.join(chars.sum(axis=1)))
-
-    def loop(self):
-        self.draw_blank()
+def loop():
+    buff = np.zeros([HEIGHT, WIDTH], dtype=np.float)
+    texture = np.ones([HEIGHT, WIDTH], dtype=np.float)
+    counter = 0
+    draw_blank()
+    try:
         while True:
-            self.draw()
-            sleep(self.throttle)
-            self.counter += 1
+            draw(texture, buff)
+            sleep(THROTTLE)
+            counter += 1
+    except KeyboardInterrupt:
+        pass
+    return counter
+
+
+def show_fps_stats(start, loops_number):
+    """
+    fps stats for single 'waves' shader and eye.png with 40c height:
+    - plain: 20-25
+    - threads: 20-25
+    - with numba's @jit: 85-95
+    """
+    dif = time() - start
+    print(f"{loops_number / dif:.2f}fps ({loops_number}f / {dif:.2f}s)")
 
 
 def main():
-    h, w = 40, 75
-    # h, w = 20, 35
-
-    canvas = Canvas(
-        h, w,
-        shader=[shaders.waves],
-        throttle=0.,
-    )
     s = time()
-    canvas.set_texture('images/eye.png')
-    try:
-        if ALT_SCREEN:
-            print('\033[?1049h\033[H')
-        canvas.loop()
-    except KeyboardInterrupt:
-        """
-        fps stats for single 'waves' shader and eye.png with 40c height:
-        - plain: 20-25
-        - threads: 20-25
-        - with numba's @jit: 85-95
-        """
-        if ALT_SCREEN:
-            print('\033[?1049l')
-        else:
-            clear_screen()
-        dif = time() - s
-        print(f"{canvas.counter / dif:.2f}fps ({canvas.counter}f / {dif:.2f}s)")
+    # canvas.set_texture('images/eye.png')
+    if ALT_SCREEN:
+        print('\033[?1049h\033[H')
+    loops_number = loop()
+    if ALT_SCREEN:
+        print('\033[?1049l')
+    else:
+        clear_screen()
+    show_fps_stats(s, loops_number)
 
 
 if __name__ == '__main__':
