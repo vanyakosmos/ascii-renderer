@@ -1,10 +1,11 @@
-from itertools import combinations
-from time import time, sleep
+from time import sleep, time
 
 import numpy as np
 from numba import jit
 
 from main import draw_blank, draw_buff
+from models import cube
+from transform import rotate
 
 
 HEIGHT, WIDTH = 40, 40
@@ -12,148 +13,132 @@ canvas = np.zeros([HEIGHT, WIDTH], dtype=np.float)
 colors = np.zeros([HEIGHT, WIDTH], dtype=np.float)
 z_buff = np.zeros([HEIGHT, WIDTH], dtype=np.float)
 
-model = np.array([
-    [1, 0, 0, 0],
-    [0, 1, 0, 0],
-    [0, 0, 1, 0],
-    [0, 0, 0, 1],
-], dtype=np.float)
-vertices = np.array([
-    (0, 0, 0),
-    (1, 0, 0),
-    (1, 1, 0),
-    (0, 1, 0),
-    (0, 1, 1),
-    (1, 1, 1),
-    (1, 0, 1),
-    (0, 0, 1),
-], dtype=np.float)
-vertices = vertices * 2 - 1  # centralize vertices around (0,0,0)
-triangles = [
-    0, 2, 1,
-    0, 3, 2,
-    2, 3, 4,
-    2, 4, 5,
-    1, 2, 5,
-    1, 5, 6,
-    0, 7, 4,
-    0, 4, 3,
-    5, 4, 7,
-    5, 7, 6,
-    0, 6, 7,
-    0, 1, 6,
-]
-
 
 @jit(nopython=True)
 def set_pixel(arr, x, y, c=1.):
-    if not 0 <= x <= 1 or not 0 <= y <= 1:
-        return
     h, w = arr.shape
-    h = int((h - 1) * y)
-    w = int((w - 1) * x)
-    arr[h, w] = c
-
-
-def rotation_mat_x(t):
-    t = np.deg2rad(t)
-    return np.array([
-        [1, 0, 0, 0],
-        [0, np.cos(t), -np.sin(t), 0],
-        [0, np.sin(t), np.cos(t), 0],
-        [0, 0, 0, 1],
-    ], dtype=np.float)
-
-
-def rotation_mat_y(t):
-    t = np.deg2rad(t)
-    return np.array([
-        [np.cos(t), 0, np.sin(t), 0],
-        [0, 1, 0, 0],
-        [-np.sin(t), 0, np.cos(t), 0],
-        [0, 0, 0, 1],
-    ], dtype=np.float)
-
-
-def rotation_mat_z(t):
-    t = np.deg2rad(t)
-    return np.array([
-        [np.cos(t), -np.sin(t), 0, 0],
-        [np.sin(t), np.cos(t), 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1],
-    ], dtype=np.float)
-
-
-def rotation_mat(x=0., y=0., z=0.):
-    return np.linalg.multi_dot([rotation_mat_z(z), rotation_mat_y(y), rotation_mat_x(x)])
-
-
-def trans_mat(x=0., y=0., z=0.):
-    return np.array([
-        [1, 0, 0, x],
-        [0, 1, 0, y],
-        [0, 0, 1, z],
-        [0, 0, 0, 1],
-    ], dtype=np.float)
-
-
-def scale_mat(x=1., y=1., z=1.):
-    return np.array([
-        [x, 0, 0, 1],
-        [0, y, 0, 1],
-        [0, 0, z, 1],
-        [0, 0, 0, 1],
-    ], dtype=np.float)
+    if not 0 <= x < w or not 0 <= y < h:
+        return
+    arr[y, x] = c
 
 
 @jit(nopython=True)
-def draw_line(arr, x1, y1, x2, y2, c=1):
+def draw_line(arr, v0, v1, c=1.):
     for t in np.arange(0, 1, 0.01):
+        x1, y1 = v0[:2]
+        x2, y2 = v1[:2]
         x = x1 * (1 - t) + x2 * t
         y = y1 * (1 - t) + y2 * t
-        set_pixel(arr, x, y, c)
+        set_pixel(arr, int(x), int(y), c)
 
 
-def draw_tri_mesh(screen, vs, tri):
-    for i1, i2 in combinations(tri, 2):
-        x1, y1 = vs[i1][:2]
-        x2, y2 = vs[i2][:2]
-        draw_line(screen, x1, y1, x2, y2)
+def draw_tri_mesh(screen, v0, v1, v2):
+    draw_line(screen, v0, v1)
+    draw_line(screen, v1, v2)
+    draw_line(screen, v2, v0)
 
 
-def map_to_screen_coords(vs, s=2):
+@jit
+def draw_tri(screen, v0, v1, v2, c=1):
+    vs = np.stack([v0, v1, v2])
+    xmi = int(np.min(vs[:, 0]))
+    xma = int(np.max(vs[:, 0]))
+    ymi = int(np.min(vs[:, 1]))
+    yma = int(np.max(vs[:, 1]))
+
+    for x in range(xmi, xma + 1):
+        for y in range(ymi, yma + 1):
+            if inside_tri([x, y], v0, v1, v2):
+                set_pixel(screen, x, y, c)
+
+
+@jit
+def inside_tri(p, v0, v1, v2):
+    dx = p[0] - v0[0]
+    dy = p[1] - v0[1]
+    dx20 = v2[0] - v0[0]
+    dy20 = v2[1] - v0[1]
+    dx10 = v1[0] - v0[0]
+    dy10 = v1[1] - v0[1]
+    s_p = (dy20 * dx) - (dx20 * dy)
+    t_p = (dx10 * dy) - (dy10 * dx)
+    d = (dx10 * dy20) - (dy10 * dx20)
+    if d > 0:
+        return (s_p >= 0) and (t_p >= 0) and (s_p + t_p) <= d
+    else:
+        return (s_p <= 0) and (t_p <= 0) and (s_p + t_p) >= d
+
+
+@jit(nopython=True)
+def norm(v):
+    return v / np.sqrt(np.sum(v ** 2))
+
+
+def map_to_screen_coords(screen, vs, s=2):
+    h, w = screen.shape
     vs = vs.copy()
-    vs[:, :3] = (vs[:, :3] + s) / (s * 2)
+    vs[:, 0] = (vs[:, 0] + s) / (s * 2) * h
+    vs[:, 1] = (vs[:, 1] + s) / (s * 2) * w
+    vs[:, 2] = (vs[:, 2] + s) / (s * 2) * h
     return vs
 
 
+@jit
+def tri_normal(v0, v1, v2):
+    n = np.cross((v2 - v0)[:3], (v1 - v0)[:3])
+    n = norm(n)
+    return n
+
+
+@jit
+def luminance(v0, v1, v2, direction=None):
+    if direction is None:
+        direction = [0, 0, 1]
+    n = tri_normal(v0, v1, v2)
+    c = n.dot(direction)
+    return c
+
+
+def get_triangles(screen_vs):
+    for i in range(0, len(cube.triangles), 3):
+        v0 = screen_vs[cube.triangles[i]]
+        v1 = screen_vs[cube.triangles[i + 1]]
+        v2 = screen_vs[cube.triangles[i + 2]]
+        yield v0, v1, v2
+
+
+def keep_steady_fps(s, fps):
+    """
+    :param s: start time of frame
+    :param fps: targeted FpS
+    """
+    t = (1 / fps - (time() - s)) / 2
+    if t > 0:
+        sleep(t)
+
+
 def main():
-    vs = vertices.copy()
+    vs = cube.vertices.copy()
+    vs = vs * 2 - 1  # centralize vertices around (0,0,0)
     ones = np.ones((vs.shape[0], 1), dtype=np.float)
     vs = np.concatenate((vs, ones), axis=1)
 
-    r = rotation_mat(x=30, y=30)
-    vs = np.dot(vs, r)
-
     draw_blank(canvas)
-    spf = 1/60
     start = time()
     counter = 0
     try:
         while True:
             s = time()
-            r = rotation_mat(x=1, y=.5)
-            vs = np.dot(vs, r)
-            screen_vs = map_to_screen_coords(vs)
+            vs = rotate(vs, x=1, y=.5)
+            screen_vs = map_to_screen_coords(canvas, vs)
             buff = canvas.copy()
-            for i in range(0, len(triangles), 3):
-                draw_tri_mesh(buff, screen_vs, triangles[i:i + 3])
+            for v0, v1, v2 in get_triangles(screen_vs):
+                c = luminance(v0, v1, v2)
+                if c <= 0:
+                    continue
+                draw_tri(buff, v0, v1, v2, c=c)
             draw_buff(buff)
-            # preserve fps
-            d = time() - s
-            if d < spf:
-                sleep(spf - d)
+            keep_steady_fps(s, 30)  # comment out for fps boost
             counter += 1
     except KeyboardInterrupt:
         print(counter / (time() - start))
