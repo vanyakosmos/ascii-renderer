@@ -1,6 +1,8 @@
 from itertools import combinations
+from time import time, sleep
 
 import numpy as np
+from numba import jit
 
 from main import draw_blank, draw_buff
 
@@ -16,7 +18,7 @@ model = np.array([
     [0, 0, 1, 0],
     [0, 0, 0, 1],
 ], dtype=np.float)
-vertexes = np.array([
+vertices = np.array([
     (0, 0, 0),
     (1, 0, 0),
     (1, 1, 0),
@@ -26,7 +28,7 @@ vertexes = np.array([
     (1, 0, 1),
     (0, 0, 1),
 ], dtype=np.float)
-vertexes = vertexes * 2 - 1
+vertices = vertices * 2 - 1  # centralize vertices around (0,0,0)
 triangles = [
     0, 2, 1,
     0, 3, 2,
@@ -43,6 +45,7 @@ triangles = [
 ]
 
 
+@jit(nopython=True)
 def set_pixel(arr, x, y, c=1.):
     if not 0 <= x <= 1 or not 0 <= y <= 1:
         return
@@ -104,6 +107,7 @@ def scale_mat(x=1., y=1., z=1.):
     ], dtype=np.float)
 
 
+@jit(nopython=True)
 def draw_line(arr, x1, y1, x2, y2, c=1):
     for t in np.arange(0, 1, 0.01):
         x = x1 * (1 - t) + x2 * t
@@ -125,7 +129,7 @@ def map_to_screen_coords(vs, s=2):
 
 
 def main():
-    vs = vertexes.copy()
+    vs = vertices.copy()
     ones = np.ones((vs.shape[0], 1), dtype=np.float)
     vs = np.concatenate((vs, ones), axis=1)
 
@@ -133,8 +137,12 @@ def main():
     vs = np.dot(vs, r)
 
     draw_blank(canvas)
+    spf = 1/60
+    start = time()
+    counter = 0
     try:
         while True:
+            s = time()
             r = rotation_mat(x=1, y=.5)
             vs = np.dot(vs, r)
             screen_vs = map_to_screen_coords(vs)
@@ -142,8 +150,13 @@ def main():
             for i in range(0, len(triangles), 3):
                 draw_tri_mesh(buff, screen_vs, triangles[i:i + 3])
             draw_buff(buff)
+            # preserve fps
+            d = time() - s
+            if d < spf:
+                sleep(spf - d)
+            counter += 1
     except KeyboardInterrupt:
-        pass
+        print(counter / (time() - start))
 
 
 if __name__ == '__main__':

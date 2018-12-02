@@ -14,7 +14,7 @@ greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:
 greyscale_mini = '@%#*+=-:.'
 greyscale_rect = '▓▒░=:.'
 greyscale_rect2 = '█▇▆▅▄▃▂▁ '
-GS = greyscale_rect
+GS = greyscale_rect[::-1]
 
 # canvas size
 HEIGHT = 40
