@@ -38,9 +38,9 @@
   - [ ] add fragment shaders
 - [ ] allow to change camera position/rotation
 - [ ] add perspective projection
-- [ ] add global illumination
+- [ ] add basic lighting
 - [ ] allow to add multiple models
 - [ ] load models from files (standadized or custom format, could be pickled list of numpy arrays)
 - [ ] separate rendering pipeline, scene setup and "game logic"
-- [ ] add keyboard cotrol (if possible)
+- [ ] add keyboard control (if possible)
 - [ ] ...
