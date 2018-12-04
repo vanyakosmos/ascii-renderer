@@ -8,6 +8,9 @@
 #### 3d cube 
 ![demo cube gif](images/demo-cube2.gif)
 
+#### fractal
+![demo fractal gif](images/demo-julia.gif)
+
 #### wave shader
 [![demo py gif](images/demo-py.gif)](https://asciinema.org/a/210121)
 

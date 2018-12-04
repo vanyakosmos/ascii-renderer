@@ -43,3 +43,25 @@ def pulsar(x, y, time, buff):
         return 0
     p = buff[y, x]
     return (1 - t) * p
+
+
+@jit(nopython=True)
+def julia(x, y, time, buff):
+    maxIter = 15
+    zoom = 1
+    r = 0.7885
+    h, w = buff.shape
+    cx = r * cos(time)
+    cy = r * sin(time)
+    moveX, moveY = 0., 0.
+    # algo
+    zx = 1.5 * (x - w / 2) / (0.5 * zoom * w) + moveX
+    zy = 1.0 * (y - h / 2) / (0.5 * zoom * h) + moveY
+    i = maxIter
+    while zx * zx + zy * zy < 4 and i > 1:
+        tmp = zx * zx - zy * zy + cx
+        zy, zx = 2.0 * zx * zy + cy, tmp
+        i -= 1
+    i = i / maxIter
+    # i = abs(i - buff[y, x])
+    return i

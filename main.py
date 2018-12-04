@@ -13,19 +13,19 @@ from utils import to_vec
 greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
 greyscale_mini = '@%#*+=-:. '
 greyscale_rect = '▓▒░=:. '
-greyscale_rect2 = '█▇▆▅▄▃▂▁ '
-GS = greyscale_rect2[::-1]
+greyscale_rect2 = '█▇▆▅▄▃▂▁ '  # slow to render
+GS = greyscale_rect[::-1]
 
 # canvas size
 HEIGHT = 40
-WIDTH = 45
+WIDTH = 60
 
 # draw everything in separate buffer (slower but prettier)
 ALT_SCREEN = False
 
 # misc
 THROTTLE = 0.
-SHADERS = (shaders.waves,)
+SHADERS = (shaders.julia,)
 
 
 def clear_screen():
