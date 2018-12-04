@@ -2,19 +2,20 @@
 
 🚧 WIP 🚧
 
+
 ## Demos
 
-#### pulsar shader
-![demo eye gif](images/demo-eye.gif)
+#### 3d cube 
+![demo cube gif](images/demo-cube2.gif)
 
-#### wave shader and another grayscale palette
+#### wave shader
 [![demo py gif](images/demo-py.gif)](https://asciinema.org/a/210121)
+
+#### pulsar shader and another grayscale palette
+![demo eye gif](images/demo-eye.gif)
 
 #### wireframe of 3d cube
 ![demo cube gif](images/demo-cube.gif)
-
-#### filled 3d cube 
-![demo cube gif](images/demo-cube2.gif)
 
 
 ## Used materials
@@ -40,7 +41,7 @@
 - [ ] add perspective projection
 - [ ] add basic lighting
 - [ ] allow to add multiple models
-- [ ] load models from files (standadized or custom format, could be pickled list of numpy arrays)
+- [ ] load models from files
 - [ ] separate rendering pipeline, scene setup and "game logic"
 - [ ] add keyboard control (if possible)
 - [ ] ...
