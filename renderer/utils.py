@@ -15,6 +15,8 @@ def keep_steady_fps(s, fps):
     :param s: start time of frame
     :param fps: targeted FpS
     """
+    if not fps:
+        return
     t = (1 / fps - (time() - s)) / 2
     if t > 0:
         sleep(t)

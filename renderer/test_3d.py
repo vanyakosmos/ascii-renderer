@@ -5,7 +5,7 @@ from numba import jit
 
 from models import cube
 from renderer.drawer import draw_blank, draw_buff
-from renderer.settings import HEIGHT, KEEP_STEADY_FPS, WIDTH
+from renderer.settings import HEIGHT, STEADY_FPS, WIDTH
 from renderer.transform import rotate
 from renderer.utils import keep_steady_fps
 
@@ -108,6 +108,19 @@ def get_triangles(screen_vs):
         yield v0, v1, v2
 
 
+def draw(delta, vs):
+    vs = rotate(vs, x=60 * delta, y=30 * delta, z=15 * delta)
+    screen_vs = map_to_screen_coords(canvas, vs)
+    buff = canvas.copy()
+    for v0, v1, v2 in get_triangles(screen_vs):
+        c = luminance(v0, v1, v2)
+        if c <= 0:
+            continue
+        draw_tri(buff, v0, v1, v2, c=c)
+    draw_buff(buff)
+    return vs
+
+
 def main():
     vs = cube.vertices.copy()
     vs = vs * 2 - 1  # centralize vertices around (0,0,0)
@@ -117,23 +130,18 @@ def main():
     draw_blank(canvas)
     start = time()
     counter = 0
+    last_checkpoint = time()
     try:
         while True:
             s = time()
-            vs = rotate(vs, x=1, y=.5)
-            screen_vs = map_to_screen_coords(canvas, vs)
-            buff = canvas.copy()
-            for v0, v1, v2 in get_triangles(screen_vs):
-                c = luminance(v0, v1, v2)
-                if c <= 0:
-                    continue
-                draw_tri(buff, v0, v1, v2, c=c)
-            draw_buff(buff)
-            if KEEP_STEADY_FPS:
-                keep_steady_fps(s, 30)
+            delta = s - last_checkpoint
+            vs = draw(delta, vs)
+            keep_steady_fps(s, STEADY_FPS)
             counter += 1
+            last_checkpoint = s
     except KeyboardInterrupt:
-        print(counter / (time() - start))
+        fps = counter / (time() - start)
+        print(f"\n🏎  {fps:.2f}fps")
 
 
 if __name__ == '__main__':

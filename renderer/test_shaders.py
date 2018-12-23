@@ -6,11 +6,11 @@ import numpy as np
 from renderer import shaders
 from renderer.drawer import draw_blank, draw_buff
 from renderer.image import get_image
-from renderer.settings import ALT_SCREEN, HEIGHT, KEEP_STEADY_FPS, WIDTH
+from renderer.settings import ALT_SCREEN, HEIGHT, STEADY_FPS, WIDTH
 from renderer.utils import keep_steady_fps
 
 
-SHADERS = (shaders.julia,)
+SHADERS = (shaders.waves,)
 
 
 def clear_screen():
@@ -56,8 +56,7 @@ def loop(texture=None):
         while True:
             s = time()
             draw(texture, buff)
-            if KEEP_STEADY_FPS:
-                keep_steady_fps(s, 30)
+            keep_steady_fps(s, STEADY_FPS)
             counter += 1
     except KeyboardInterrupt:
         pass
