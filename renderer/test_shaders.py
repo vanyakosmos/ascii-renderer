@@ -1,50 +1,20 @@
 import os
-import sys
-from time import sleep, time
+from time import time
 
 import numpy as np
 
-import shaders
-from image import get_image
-from utils import to_vec
+from renderer import shaders
+from renderer.drawer import draw_blank, draw_buff
+from renderer.image import get_image
+from renderer.settings import ALT_SCREEN, HEIGHT, KEEP_STEADY_FPS, WIDTH
+from renderer.utils import keep_steady_fps
 
 
-# various greyscale palettes
-greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
-greyscale_mini = '@%#*+=-:. '
-greyscale_rect = '▓▒░=:. '
-greyscale_rect2 = '█▇▆▅▄▃▂▁ '  # slow to render
-GS = greyscale_rect[::-1]
-
-# canvas size
-HEIGHT = 40
-WIDTH = 60
-
-# draw everything in separate buffer (slower but prettier)
-ALT_SCREEN = False
-
-# misc
-THROTTLE = 0.
 SHADERS = (shaders.julia,)
 
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
-
-
-def jump_to_the_top(buff):
-    """
-    > \033[K - clear line
-    > \033[F - move cursor up
-    """
-    sys.stdout.write("\033[F" * buff.shape[0])
-
-
-@to_vec(otypes=[np.object])
-def map_char(i):
-    i = max(0.0, min(1.0, i))
-    c = GS[int((len(GS) - 1) * i)]
-    return c * 2
 
 
 def set_pixel(texture, buff, shader, y, x, t):
@@ -69,18 +39,6 @@ def apply_shaders(texture, buff):
         texture_ = buff.copy()
 
 
-def draw_blank(buff):
-    h, w = buff.shape
-    for _ in range(h):
-        print(' ' * w)
-
-
-def draw_buff(buff):
-    chars: np.ndarray = map_char(buff)
-    jump_to_the_top(buff)
-    print('\n'.join(chars.sum(axis=1)))
-
-
 def draw(texture, buff):
     apply_shaders(texture, buff)
     draw_buff(buff)
@@ -96,8 +54,10 @@ def loop(texture=None):
     draw_blank(buff)
     try:
         while True:
+            s = time()
             draw(texture, buff)
-            sleep(THROTTLE)
+            if KEEP_STEADY_FPS:
+                keep_steady_fps(s, 30)
             counter += 1
     except KeyboardInterrupt:
         pass

@@ -1,14 +1,15 @@
-from time import sleep, time
+from time import time
 
 import numpy as np
 from numba import jit
 
-from main import draw_blank, draw_buff
 from models import cube
-from transform import rotate
+from renderer.drawer import draw_blank, draw_buff
+from renderer.settings import HEIGHT, KEEP_STEADY_FPS, WIDTH
+from renderer.transform import rotate
+from renderer.utils import keep_steady_fps
 
 
-HEIGHT, WIDTH = 40, 40
 canvas = np.zeros([HEIGHT, WIDTH], dtype=np.float)
 colors = np.zeros([HEIGHT, WIDTH], dtype=np.float)
 z_buff = np.zeros([HEIGHT, WIDTH], dtype=np.float)
@@ -107,16 +108,6 @@ def get_triangles(screen_vs):
         yield v0, v1, v2
 
 
-def keep_steady_fps(s, fps):
-    """
-    :param s: start time of frame
-    :param fps: targeted FpS
-    """
-    t = (1 / fps - (time() - s)) / 2
-    if t > 0:
-        sleep(t)
-
-
 def main():
     vs = cube.vertices.copy()
     vs = vs * 2 - 1  # centralize vertices around (0,0,0)
@@ -138,7 +129,8 @@ def main():
                     continue
                 draw_tri(buff, v0, v1, v2, c=c)
             draw_buff(buff)
-            keep_steady_fps(s, 30)  # comment out for fps boost
+            if KEEP_STEADY_FPS:
+                keep_steady_fps(s, 30)
             counter += 1
     except KeyboardInterrupt:
         print(counter / (time() - start))
