@@ -1,0 +1,18 @@
+- [ ] logically split code (because now it's just a mess grouped in random files)
+- [x] add basic shading directly mapped to screen
+- [ ] 3d model rendering
+  - [x] load hardcoded model vertices/faces
+  - [x] render wireframe
+  - [x] render filled faces (with colors based on normals and camera direction)
+  - [ ] allow to apply all kind of transformations on vertices
+  - [ ] add texture
+  - [ ] add vertex shaders (?)
+  - [ ] add fragment shaders
+- [ ] allow to change camera position/rotation
+- [ ] add perspective projection
+- [ ] add basic lighting
+- [ ] allow to add multiple models
+- [ ] load models from files
+- [ ] separate rendering pipeline, scene setup and "game logic"
+- [ ] add keyboard control (if possible)
+- [ ] ...
