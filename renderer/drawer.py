@@ -8,8 +8,10 @@ from renderer.utils import to_vec
 
 @to_vec(otypes=[np.object])
 def map_char(i):
-    i = max(0.0, min(1.0, i))
-    c = GREY_SCALE[round((len(GREY_SCALE) - 1) * i)]
+    i = max(0., min(1., i))
+    s = len(GREY_SCALE)
+    # fallback to s-1 if i==1
+    c = GREY_SCALE[min(int(s * i), s - 1)]
     return c * 2
 
 
