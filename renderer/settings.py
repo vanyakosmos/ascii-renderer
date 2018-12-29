@@ -1,8 +1,9 @@
 # various greyscale palettes
 greyscale_max = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,"^`\'. '
 greyscale_mini = '@%#*+=-:. '
-greyscale_rect = '▓▒░=:. '
-greyscale_rect2 = '█▇▆▅▄▃▂▁ '  # slow to render
+greyscale_rect = '▓▒░ '
+greyscale_rect2 = '▓▒░=:. '
+greyscale_rect3 = '█▇▆▅▄▃▂▁ '  # slow to render
 GREY_SCALE = greyscale_rect[::-1]
 
 # canvas size

@@ -8,6 +8,10 @@
 
 ![demo cube gif](images/demo-cube2.gif)
 
+#### [DOOM fire](http://fabiensanglard.net/doom_fire_psx/)
+
+![demo fire](images/demo-fire.gif)
+
 #### fractal
 
 ![demo fractal gif](images/demo-julia.gif)

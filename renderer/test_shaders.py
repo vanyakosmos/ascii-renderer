@@ -10,7 +10,7 @@ from renderer.settings import ALT_SCREEN, HEIGHT, STEADY_FPS, WIDTH
 from renderer.utils import keep_steady_fps
 
 
-SHADERS = (shaders.waves,)
+SHADERS = (shaders.doom_fire,)
 
 
 def clear_screen():
@@ -22,7 +22,8 @@ def set_pixel(texture, buff, shader, y, x, t):
         y=y,
         x=x,
         time=t,
-        buff=texture,
+        texture=texture,
+        buff=buff,
     )
     buff[y, x] = i
 
@@ -46,7 +47,7 @@ def draw(texture, buff):
 
 def loop(texture=None):
     if texture is None:
-        texture = np.ones([HEIGHT, WIDTH], dtype=np.float)
+        texture = np.zeros([HEIGHT, WIDTH], dtype=np.float)
     buff = np.zeros_like(texture, dtype=np.float)
     counter = 0
     if ALT_SCREEN:
@@ -74,7 +75,9 @@ def show_fps_stats(start, loops_number):
 
 def main():
     s = time()
-    texture = get_image('images/py.png', height=HEIGHT)
+    # texture = get_image('images/py.png', height=HEIGHT)
+    # texture = np.ones([HEIGHT, WIDTH], dtype=np.float)
+    texture = np.zeros([HEIGHT, WIDTH], dtype=np.float)
     loops_number = loop(texture)
     show_fps_stats(s, loops_number)
 

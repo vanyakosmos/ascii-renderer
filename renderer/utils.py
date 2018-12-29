@@ -17,6 +17,6 @@ def keep_steady_fps(s, fps):
     """
     if not fps:
         return
-    t = (1 / fps - (time() - s)) / 2
+    t = (1 / fps - (time() - s))
     if t > 0:
         sleep(t)

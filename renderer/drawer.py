@@ -9,7 +9,7 @@ from renderer.utils import to_vec
 @to_vec(otypes=[np.object])
 def map_char(i):
     i = max(0.0, min(1.0, i))
-    c = GREY_SCALE[int((len(GREY_SCALE) - 1) * i)]
+    c = GREY_SCALE[round((len(GREY_SCALE) - 1) * i)]
     return c * 2
 
 

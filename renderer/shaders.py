@@ -1,3 +1,4 @@
+import random
 from math import cos, sin
 
 import numpy as np
@@ -18,35 +19,40 @@ def rel(x, y, buff):
 
 
 @jit(nopython=True)
-def waves(x, y, time, buff):
+def bound(v, a=0, b=1):
+    return min(b, max(a, v))
+
+
+@jit(nopython=True)
+def waves(x, y, time, texture, buff):
     x_, y_ = rel(x, y, buff)
     r = abs(cos(sin(time * 2 + 2 * x_) * 3 * y_ + time))
     s = 2
-    p = buff[max(0, y - s):y + s, max(0, x - s):x + s].mean()
+    p = texture[max(0, y - s):y + s, max(0, x - s):x + s].mean()
     return r * p
 
 
 @jit(nopython=True)
-def eyes(x, y, time, buff):
+def eyes(x, y, time, texture, buff):
     x_, y_ = rel(x, y, buff)
-    p = buff[y, x]
+    p = texture[y, x]
     return (sin(time + x_ * 10) + cos(time + y_ * 10)) * p
 
 
 @jit(nopython=True)
-def pulsar(x, y, time, buff):
+def pulsar(x, y, time, texture, buff):
     x_, y_ = rel(x, y, buff)
     cx, cy = 0.5, 0.5
     r = dist([cx, cy], [x_, y_])
     t = time % 1.
     if r > t:
         return 0
-    p = buff[y, x]
+    p = texture[y, x]
     return (1 - t) * p
 
 
 @jit(nopython=True)
-def julia(x, y, time, buff):
+def julia(x, y, time, texture, buff):
     maxIter = 15
     zoom = 1
     r = 0.7885
@@ -65,3 +71,17 @@ def julia(x, y, time, buff):
     i = i / maxIter
     # i = abs(i - buff[y, x])
     return i
+
+
+@jit(nopython=True)
+def doom_fire(x, y, time, texture, buff):
+    """
+    http://fabiensanglard.net/doom_fire_psx/
+    """
+    h, w = buff.shape
+    if y == h - 1:
+        return 1.0
+    ry = random.randint(0, 1)
+    rx = random.randint(-1, 1)
+    p = buff[bound(y + ry, 0, h - 1), bound(x + rx, 0, w - 1)]
+    return p - 0.03 * random.random()
