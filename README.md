@@ -4,29 +4,13 @@
 
 ## Demos
 
-#### 3d cube
+#### [3d stuff](demos/README.md#3d-stuff)
 
-![demo cube gif](images/demo-cube2.gif)
+![demo cube gif](demos/cube.gif)
 
-#### [DOOM fire](http://fabiensanglard.net/doom_fire_psx/)
+#### [shaders](demos/README.md#shaders)
 
-![demo fire](images/demo-fire.gif)
-
-#### fractal
-
-![demo fractal gif](images/demo-julia.gif)
-
-#### wave shader
-
-[![demo py gif](images/demo-py.gif)](https://asciinema.org/a/210121)
-
-#### pulsar shader and another grayscale palette
-
-![demo eye gif](images/demo-eye.gif)
-
-#### wireframe of 3d cube
-
-![demo cube gif](images/demo-cube.gif)
+[![demo py gif](demos/py-wave.gif)](https://asciinema.org/a/210121)
 
 ## Used materials
 
